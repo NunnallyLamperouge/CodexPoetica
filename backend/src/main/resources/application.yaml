@@ -15,5 +15,5 @@ spring:
         format_sql: true
 
 jwt:
-  secret: your-secret-key-here-change-in-production
+  secret: p]J]r+;@m-KonXlE
   expiration: 86400000
