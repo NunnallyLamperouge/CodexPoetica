@@ -15,6 +15,9 @@ backend/mvnw
 backend/mvnw.cmd
 backend/logs/
 
+# 文档（不上传）
+readme/
+
 # IDE 通用
 .vscode/
 .idea/
