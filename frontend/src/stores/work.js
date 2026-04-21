@@ -17,6 +17,8 @@ export const useWorkStore = defineStore('work', () => {
   const currentWorkId = ref(null)
   const parseError = ref(null)
   const isPlaying = ref(false)
+  const audioSupported = ref(audioGen.supported)
+  const audioError = ref(null)
 
   async function loadMappingProfiles() {
     try {
@@ -52,7 +54,13 @@ export const useWorkStore = defineStore('work', () => {
   }
 
   function toggleAudio() {
+    audioError.value = null
     isPlaying.value = audioGen.toggle(audioConfig.value, astSummary.value)
+    if (audioGen.error) {
+      audioError.value = audioGen.error
+      audioSupported.value = audioGen.supported
+      isPlaying.value = false
+    }
   }
 
   function stopAudio() {
@@ -90,6 +98,7 @@ export const useWorkStore = defineStore('work', () => {
   return {
     language, sourceCode, astSummary, poemResult, audioConfig, visualConfig,
     mappingProfileId, mappingProfiles, currentWorkId, parseError, isPlaying,
+    audioSupported, audioError,
     loadMappingProfiles, processCode, toggleAudio, stopAudio, saveDraft, publishShare,
   }
 })

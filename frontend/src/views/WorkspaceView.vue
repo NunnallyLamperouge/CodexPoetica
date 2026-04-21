@@ -48,6 +48,8 @@
         <AudioPlayer
           :playing="store.isPlaying"
           :audioConfig="store.audioConfig"
+          :supported="store.audioSupported"
+          :error="store.audioError"
           @toggle="store.toggleAudio()"
         />
       </div>
@@ -58,6 +60,7 @@
       <button class="btn-action btn-green" @click="showShare = true">发布分享</button>
       <button class="btn-action" @click="exportPoem">导出诗歌</button>
       <button class="btn-action" @click="exportImage">导出图片</button>
+      <button class="btn-action" @click="exportJSON">导出 JSON</button>
     </footer>
 
     <ShareModal v-if="showShare" @close="showShare = false" />
@@ -147,6 +150,26 @@ function exportImage() {
   a.download = 'code-tree.png'
   a.click()
   api.recordExport({ workId: store.currentWorkId, exportType: 'PNG', fileName: 'code-tree.png' }).catch(() => {})
+}
+
+function exportJSON() {
+  if (!store.astSummary) return
+  const snapshot = {
+    title: store.poemResult?.title || '未命名',
+    language: store.language,
+    astSummary: store.astSummary,
+    poemResult: store.poemResult,
+    audioConfig: store.audioConfig,
+    visualConfig: store.visualConfig,
+    mappingProfileId: store.mappingProfileId,
+    exportedAt: new Date().toISOString(),
+  }
+  const fileName = (store.poemResult?.title || 'work') + '.json'
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' }))
+  a.download = fileName
+  a.click()
+  api.recordExport({ workId: store.currentWorkId, exportType: 'JSON', fileName }).catch(() => {})
 }
 </script>
 

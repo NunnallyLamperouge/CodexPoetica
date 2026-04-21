@@ -22,10 +22,20 @@ export class AudioGenerator {
     this.nodes = []
     this.playing = false
     this.timeoutIds = []
+    this.supported = !!(window.AudioContext || window.webkitAudioContext)
+    this.error = null
   }
 
   _ensureCtx() {
-    if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)()
+    if (!this.supported) throw new Error('浏览器不支持 Web Audio API')
+    if (!this.ctx) {
+      try {
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)()
+      } catch (e) {
+        this.supported = false
+        throw new Error('音频初始化失败：' + e.message)
+      }
+    }
   }
 
   buildConfig(astSummary) {
@@ -38,7 +48,13 @@ export class AudioGenerator {
 
   play(audioConfig, astSummary) {
     this.stop()
-    this._ensureCtx()
+    this.error = null
+    try {
+      this._ensureCtx()
+    } catch (e) {
+      this.error = e.message
+      return
+    }
     if (this.ctx.state === 'suspended') this.ctx.resume()
 
     const { bpm, scale, durationSec } = audioConfig || this.buildConfig(astSummary)
@@ -58,16 +74,18 @@ export class AudioGenerator {
   }
 
   _playNote(freq, duration) {
-    const osc = this.ctx.createOscillator()
-    const gain = this.ctx.createGain()
-    osc.type = 'sine'
-    osc.frequency.value = freq
-    gain.gain.setValueAtTime(0.15, this.ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration)
-    osc.connect(gain)
-    gain.connect(this.ctx.destination)
-    osc.start()
-    osc.stop(this.ctx.currentTime + duration)
+    try {
+      const osc = this.ctx.createOscillator()
+      const gain = this.ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.value = freq
+      gain.gain.setValueAtTime(0.15, this.ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration)
+      osc.connect(gain)
+      gain.connect(this.ctx.destination)
+      osc.start()
+      osc.stop(this.ctx.currentTime + duration)
+    } catch {}
   }
 
   stop() {
