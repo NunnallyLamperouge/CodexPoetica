@@ -9,6 +9,7 @@ import * as monaco from 'monaco-editor'
 const props = defineProps({
   modelValue: { type: String, default: '' },
   language: { type: String, default: 'javascript' },
+  monacoTheme: { type: String, default: 'vs-dark' },
 })
 const emit = defineEmits(['update:modelValue'])
 
@@ -19,7 +20,7 @@ onMounted(() => {
   editor = monaco.editor.create(editorEl.value, {
     value: props.modelValue,
     language: props.language,
-    theme: 'vs-dark',
+    theme: props.monacoTheme,
     fontSize: 14,
     minimap: { enabled: false },
     lineNumbers: 'on',
@@ -34,6 +35,10 @@ onMounted(() => {
 
 watch(() => props.language, (lang) => {
   if (editor) monaco.editor.setModelLanguage(editor.getModel(), lang)
+})
+
+watch(() => props.monacoTheme, (theme) => {
+  if (editor) monaco.editor.setTheme(theme)
 })
 
 watch(() => props.modelValue, (val) => {

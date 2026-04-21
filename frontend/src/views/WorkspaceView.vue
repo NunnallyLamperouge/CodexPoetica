@@ -19,6 +19,7 @@
         <CodeEditor
           v-model="code"
           :language="store.language"
+          :monacoTheme="store.monacoTheme"
           class="editor"
           @update:modelValue="onCodeChange"
         />

@@ -4,7 +4,7 @@ import { api } from '../api/index.js'
 
 export async function parseCode(language, sourceCode) {
   if (!sourceCode || !sourceCode.trim()) {
-    return { nodeCount: 0, maxDepth: 0, functionCount: 0, variableCount: 0, branchCount: 0 }
+    return { nodeCount: 0, maxDepth: 0, functionCount: 0, variableCount: 0, branchCount: 0, loopCount: 0, classCount: 0, commentCount: 0 }
   }
   if (language === 'javascript') {
     return parseJS(sourceCode)
@@ -16,22 +16,19 @@ export async function parseCode(language, sourceCode) {
 function parseJS(code) {
   try {
     const ast = acorn.parse(code, { ecmaVersion: 2020, sourceType: 'module' })
-    let nodeCount = 0
-    let maxDepth = 0
-    let functionCount = 0
-    let variableCount = 0
-    let branchCount = 0
+    let nodeCount = 0, maxDepth = 0, functionCount = 0, variableCount = 0
+    let branchCount = 0, loopCount = 0, classCount = 0
 
     function walk(node, depth) {
       if (!node || typeof node !== 'object') return
       nodeCount++
       if (depth > maxDepth) maxDepth = depth
       const type = node.type
-      if (type === 'FunctionDeclaration' || type === 'FunctionExpression' || type === 'ArrowFunctionExpression') {
-        functionCount++
-      }
+      if (type === 'FunctionDeclaration' || type === 'FunctionExpression' || type === 'ArrowFunctionExpression') functionCount++
       if (type === 'VariableDeclarator') variableCount++
       if (type === 'IfStatement' || type === 'SwitchStatement' || type === 'ConditionalExpression') branchCount++
+      if (type === 'ForStatement' || type === 'WhileStatement' || type === 'DoWhileStatement' || type === 'ForInStatement' || type === 'ForOfStatement') loopCount++
+      if (type === 'ClassDeclaration' || type === 'ClassExpression') classCount++
       for (const key of Object.keys(node)) {
         if (key === 'type' || key === 'start' || key === 'end') continue
         const child = node[key]
@@ -40,23 +37,30 @@ function parseJS(code) {
       }
     }
     walk(ast, 0)
-    return { nodeCount, maxDepth, functionCount, variableCount, branchCount, error: null }
+    const commentCount = (code.match(/\/\/[^\n]*|\/\*[\s\S]*?\*\//g) || []).length
+    return { nodeCount, maxDepth, functionCount, variableCount, branchCount, loopCount, classCount, commentCount, error: null }
   } catch (e) {
-    return { nodeCount: 0, maxDepth: 0, functionCount: 0, variableCount: 0, branchCount: 0, error: e.message }
+    return { nodeCount: 0, maxDepth: 0, functionCount: 0, variableCount: 0, branchCount: 0, loopCount: 0, classCount: 0, commentCount: 0, error: e.message }
   }
 }
 
 async function parsePython(code) {
   try {
     const res = await api.parseCode('python', code)
-    return res.data.data || { nodeCount: 0, maxDepth: 0, functionCount: 0, variableCount: 0, branchCount: 0 }
+    const data = res.data.data || {}
+    const loopCount = (code.match(/\b(for|while)\b/g) || []).length
+    const classCount = (code.match(/\bclass\s+\w+/g) || []).length
+    const commentCount = (code.match(/#[^\n]*/g) || []).length
+    return { ...data, loopCount, classCount, commentCount }
   } catch {
-    // fallback: simple regex-based estimation
     const lines = code.split('\n')
     const functionCount = (code.match(/\bdef\s+\w+/g) || []).length
     const variableCount = (code.match(/^\s*\w+\s*=/gm) || []).length
-    const branchCount = (code.match(/\b(if|elif|else|for|while)\b/g) || []).length
+    const branchCount = (code.match(/\b(if|elif|else)\b/g) || []).length
+    const loopCount = (code.match(/\b(for|while)\b/g) || []).length
+    const classCount = (code.match(/\bclass\s+\w+/g) || []).length
+    const commentCount = (code.match(/#[^\n]*/g) || []).length
     const maxDepth = Math.max(...lines.map(l => Math.floor((l.match(/^(\s*)/)[1].length) / 4)), 0)
-    return { nodeCount: lines.length, maxDepth, functionCount, variableCount, branchCount, error: null }
+    return { nodeCount: lines.length, maxDepth, functionCount, variableCount, branchCount, loopCount, classCount, commentCount, error: null }
   }
 }

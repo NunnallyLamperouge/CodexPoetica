@@ -20,6 +20,17 @@ export const useWorkStore = defineStore('work', () => {
   const audioSupported = ref(audioGen.supported)
   const audioError = ref(null)
 
+  const MONACO_THEME_MAP = {
+    forest_ink: 'vs-dark',
+    ink_wash: 'hc-black',
+    neon_circuit: 'vs-dark',
+    sakura_dream: 'vs-dark',
+    deep_ocean: 'hc-black',
+    golden_autumn: 'vs-dark',
+    void_purple: 'hc-black',
+  }
+  const monacoTheme = ref('vs-dark')
+
   async function loadMappingProfiles() {
     try {
       const res = await api.getMappingProfiles()
@@ -46,6 +57,7 @@ export const useWorkStore = defineStore('work', () => {
     const cfg = audioGen.buildConfig(summary)
     audioConfig.value = cfg
     visualConfig.value = { theme: profile?.visualTheme || 'forest_ink', seed: Date.now(), nodeCount: summary.nodeCount }
+    monacoTheme.value = MONACO_THEME_MAP[profile?.visualTheme] || 'vs-dark'
 
     if (isPlaying.value) {
       audioGen.stop()
@@ -98,7 +110,7 @@ export const useWorkStore = defineStore('work', () => {
   return {
     language, sourceCode, astSummary, poemResult, audioConfig, visualConfig,
     mappingProfileId, mappingProfiles, currentWorkId, parseError, isPlaying,
-    audioSupported, audioError,
+    audioSupported, audioError, monacoTheme,
     loadMappingProfiles, processCode, toggleAudio, stopAudio, saveDraft, publishShare,
   }
 })

@@ -1,7 +1,11 @@
 const THEMES = {
-  forest_ink: { bg: '#0d1117', branch: '#4ade80', leaf: '#86efac', line: '#22c55e', text: '#d1fae5' },
-  ink_wash:   { bg: '#1a1a2e', branch: '#a78bfa', leaf: '#c4b5fd', line: '#7c3aed', text: '#ede9fe' },
-  neon_circuit: { bg: '#0f0f23', branch: '#f472b6', leaf: '#fb7185', line: '#ec4899', text: '#fce7f3' },
+  forest_ink:    { bg: '#0d1117', branch: '#4ade80', leaf: '#86efac', line: '#22c55e', text: '#d1fae5' },
+  ink_wash:      { bg: '#1a1a2e', branch: '#a78bfa', leaf: '#c4b5fd', line: '#7c3aed', text: '#ede9fe' },
+  neon_circuit:  { bg: '#0f0f23', branch: '#f472b6', leaf: '#fb7185', line: '#ec4899', text: '#fce7f3' },
+  sakura_dream:  { bg: '#1a0a0f', branch: '#f9a8d4', leaf: '#fce7f3', line: '#fb7185', text: '#fff1f2' },
+  deep_ocean:    { bg: '#020c1b', branch: '#22d3ee', leaf: '#67e8f9', line: '#0891b2', text: '#e0f7fa' },
+  golden_autumn: { bg: '#1a0f00', branch: '#fbbf24', leaf: '#fde68a', line: '#d97706', text: '#fef3c7' },
+  void_purple:   { bg: '#000000', branch: '#c084fc', leaf: '#ffffff', line: '#7c3aed', text: '#f3e8ff' },
 }
 
 export class CanvasTree {

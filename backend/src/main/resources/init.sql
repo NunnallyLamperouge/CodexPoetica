@@ -85,4 +85,12 @@ VALUES
   ('haiku', '俳句风格', 'haiku', 'minimal', 'ink_wash',
    '{"depthToPitch":true,"functionToBranch":false,"variableToLeaf":true}', 1, 1),
   ('epic', '史诗风格', 'epic', 'orchestral', 'neon_circuit',
-   '{"depthToPitch":true,"functionToBranch":true,"variableToLeaf":false}', 1, 1);
+   '{"depthToPitch":true,"functionToBranch":true,"variableToLeaf":false}', 1, 1),
+  ('sakura', '樱花梦境', 'haiku', 'minimal', 'sakura_dream',
+   '{"depthToPitch":true,"functionToBranch":false,"variableToLeaf":true}', 1, 1),
+  ('ocean', '深海电路', 'prose_poem', 'ambient', 'deep_ocean',
+   '{"depthToPitch":true,"functionToBranch":true,"variableToLeaf":true}', 1, 1),
+  ('autumn', '金秋史诗', 'sonnet', 'orchestral', 'golden_autumn',
+   '{"depthToPitch":true,"functionToBranch":true,"variableToLeaf":false}', 1, 1),
+  ('void', '虚空自由', 'free_verse', 'ambient', 'void_purple',
+   '{"depthToPitch":false,"functionToBranch":true,"variableToLeaf":true}', 1, 1);
