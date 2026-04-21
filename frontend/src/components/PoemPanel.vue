@@ -1,0 +1,37 @@
+<template>
+  <div class="poem-panel">
+    <div v-if="!poem" class="empty">输入代码后，诗歌将在此生成</div>
+    <template v-else>
+      <div class="poem-title">{{ poem.title }}</div>
+      <div class="poem-style">{{ styleLabel }}</div>
+      <div class="poem-lines">
+        <p v-for="(line, i) in poem.lines" :key="i" class="poem-line">{{ line }}</p>
+      </div>
+    </template>
+  </div>
+</template>
+
+<script setup>
+import { computed } from 'vue'
+
+const props = defineProps({ poem: { type: Object, default: null } })
+
+const styleLabel = computed(() => {
+  const map = { free_verse: '自由诗', haiku: '俳句', epic: '史诗' }
+  return map[props.poem?.style] || ''
+})
+</script>
+
+<style scoped>
+.poem-panel {
+  padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+  color: #d1fae5;
+  font-family: 'Georgia', serif;
+}
+.empty { color: #6b7280; font-style: italic; }
+.poem-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 4px; color: #4ade80; }
+.poem-style { font-size: 0.75rem; color: #6b7280; margin-bottom: 12px; }
+.poem-line { margin: 6px 0; line-height: 1.8; font-size: 0.95rem; }
+</style>
