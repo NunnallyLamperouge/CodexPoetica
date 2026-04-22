@@ -1,16 +1,17 @@
 <template>
   <div class="workspace">
-    <header class="header">
-      <span class="logo">Codex Poetica</span>
-      <div class="header-actions">
+    <div class="toolbar">
+      <div class="toolbar-left">
         <select v-model="store.language" @change="onLanguageChange" class="lang-select">
           <option value="javascript">JavaScript</option>
           <option value="python">Python</option>
         </select>
         <button class="btn-ghost" @click="loadExample">示例代码</button>
+      </div>
+      <div class="toolbar-right">
         <button class="btn-ghost" @click="showShare = true">保存 / 分享</button>
       </div>
-    </header>
+    </div>
 
     <div class="main">
       <div class="left-panel">
@@ -77,6 +78,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useWorkStore } from '../stores/work.js'
 import { api } from '../api/index.js'
 import CodeEditor from '../components/CodeEditor.vue'
@@ -86,6 +88,7 @@ import CodeTree from '../components/CodeTree.vue'
 import ShareModal from '../components/ShareModal.vue'
 
 const store = useWorkStore()
+const route = useRoute()
 const showShare = ref(false)
 const code = ref('')
 const treeWidth = ref(400)
@@ -96,6 +99,21 @@ let debounceTimer = null
 
 onMounted(async () => {
   await store.loadMappingProfiles()
+  const workId = route.query.workId
+  if (workId) {
+    try {
+      const res = await api.getWork(workId)
+      const work = res.data.data
+      if (work) {
+        store.currentWorkId = work.id
+        store.language = work.language || 'javascript'
+        store.mappingProfileId = work.mappingProfileId || 'default'
+        code.value = work.sourceCode || ''
+        await store.processCode(code.value)
+        return
+      }
+    } catch {}
+  }
   const saved = localStorage.getItem('codex_draft_code')
   if (saved) {
     code.value = saved
@@ -183,9 +201,9 @@ function exportJSON() {
 </script>
 
 <style scoped>
-.workspace { display: flex; flex-direction: column; height: 100vh; background: #0d1117; color: #e6edf3; }
-.header { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; background: #161b22; border-bottom: 1px solid #30363d; }
-.logo { font-size: 1.1rem; font-weight: bold; color: #4ade80; letter-spacing: 1px; }
+.workspace { display: flex; flex-direction: column; height: calc(100vh - 48px); background: #0d1117; color: #e6edf3; }
+.toolbar { display: flex; align-items: center; justify-content: space-between; padding: 6px 16px; background: #161b22; border-bottom: 1px solid #30363d; }
+.toolbar-left, .toolbar-right { display: flex; gap: 8px; align-items: center; }
 .header-actions { display: flex; gap: 8px; align-items: center; }
 .lang-select, .profile-select { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; }
 .btn-ghost { background: transparent; color: #8b949e; border: 1px solid #30363d; border-radius: 6px; padding: 5px 12px; cursor: pointer; font-size: 0.85rem; }
