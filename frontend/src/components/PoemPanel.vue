@@ -45,8 +45,9 @@ watch(() => props.poem, (newPoem) => {
   const total = newPoem.lines?.length || 0
   let i = 0
   const tick = () => {
-    if (i <= total) {
-      visibleLines.value = i++
+    if (i < total) {
+      visibleLines.value = i + 1
+      i++
       setTimeout(tick, 150)
     }
   }

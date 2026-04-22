@@ -80,7 +80,7 @@ export const useWorkStore = defineStore('work', () => {
     }
     if (codeDna.value) {
       audioGen.error = null
-      try { audioGen._ensureCtx() } catch (e) { audioError.value = e.message; return }
+      try { audioGen.ensureReady() } catch (e) { audioError.value = e.message; return }
       audioGen.playFromDna(codeDna.value)
       isPlaying.value = true
     } else {

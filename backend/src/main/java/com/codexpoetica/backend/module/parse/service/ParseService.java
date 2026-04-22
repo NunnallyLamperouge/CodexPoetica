@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 public class ParseService {
 
     private static final Pattern DEF_PATTERN = Pattern.compile("\\bdef\\s+\\w+");
-    private static final Pattern ASSIGN_PATTERN = Pattern.compile("^\\s*\\w+\\s*=[^=]");
+    private static final Pattern ASSIGN_PATTERN = Pattern.compile("^\\s*\\w+\\s*=[^=].*");
     private static final Pattern BRANCH_PATTERN = Pattern.compile("\\b(if|elif|else|for|while|try|except)\\b");
 
     public ParseResponse parse(ParseRequest req) {
@@ -23,7 +23,7 @@ public class ParseService {
             return ParseResponse.builder().build();
         }
 
-        String[] lines = code.split("\n");
+        String[] lines = code.split("\\r?\\n");
         int nodeCount = 0;
         int maxDepth = 0;
         int functionCount = 0;

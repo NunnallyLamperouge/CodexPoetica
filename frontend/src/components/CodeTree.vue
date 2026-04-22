@@ -46,7 +46,7 @@ function stopAll() {
 function runVisualization() {
   stopAll()
   if (props.mode === '3d') {
-    if (props.astSummary && props.astSummary.nodeCount > 0) {
+    if (props.astSummary && props.astSummary.nodeCount > 0 && canvas3d.value) {
       particle3d = new ParticleTree3D(canvas3d.value)
       particle3d.animate(props.astSummary, props.theme, props.codeDna)
       if (props.playing) startSpectrum3d()
@@ -61,7 +61,7 @@ function runVisualization() {
   }
 }
 
-watch(() => [props.astSummary, props.theme, props.mode], runVisualization)
+watch(() => [props.astSummary, props.theme, props.mode, props.codeDna], runVisualization, { deep: true })
 
 watch(() => props.playing, (isPlaying) => {
   if (props.mode === '3d') {

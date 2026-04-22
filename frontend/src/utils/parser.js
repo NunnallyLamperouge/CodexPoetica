@@ -59,7 +59,7 @@ async function parsePython(code) {
     const commentCount = (code.match(/#[^\n]*/g) || []).length
     // build depthCurve from indentation
     const lines = code.split('\n').filter(l => l.trim())
-    const depthCurve = lines.map(l => Math.floor((l.match(/^(\s*)/)[1].length) / 4))
+    const depthCurve = lines.map(l => Math.floor(((l.match(/^(\s*)/)?.[1] || '').length) / 4))
     const widthByDepth = []
     depthCurve.forEach(d => { widthByDepth[d] = (widthByDepth[d] || 0) + 1 })
     return { ...data, loopCount, classCount, commentCount, sequence: [], depthCurve, widthByDepth }
@@ -71,10 +71,10 @@ async function parsePython(code) {
     const loopCount = (code.match(/\b(for|while)\b/g) || []).length
     const classCount = (code.match(/\bclass\s+\w+/g) || []).length
     const commentCount = (code.match(/#[^\n]*/g) || []).length
-    const depthCurve = lines.filter(l => l.trim()).map(l => Math.floor((l.match(/^(\s*)/)[1].length) / 4))
+    const depthCurve = lines.filter(l => l.trim()).map(l => Math.floor(((l.match(/^(\s*)/)?.[1] || '').length) / 4))
     const widthByDepth = []
     depthCurve.forEach(d => { widthByDepth[d] = (widthByDepth[d] || 0) + 1 })
-    const maxDepth = Math.max(...depthCurve, 0)
+    const maxDepth = depthCurve.length > 0 ? Math.max(0, ...depthCurve) : 0
     return { nodeCount: lines.length, maxDepth, functionCount, variableCount, branchCount, loopCount, classCount, commentCount, sequence: [], depthCurve, widthByDepth, error: null }
   }
 }

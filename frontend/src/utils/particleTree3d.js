@@ -58,9 +58,9 @@ function computePositions(nodes, dna) {
     if (shape === 'tower') {
       const depth = node.depth || 1
       const siblings = nodes.filter(n => n.depth === depth && n.parent !== null)
-      const idx = siblings.indexOf(node)
-      const count = siblings.length
-      const angle = (idx / Math.max(count, 1)) * Math.PI * 2
+      const idx = Math.max(0, siblings.indexOf(node))
+      const count = Math.max(siblings.length, 1)
+      const angle = (idx / count) * Math.PI * 2
       const r = 0.8 + depth * 0.3
       return new THREE.Vector3(
         r * Math.cos(angle),

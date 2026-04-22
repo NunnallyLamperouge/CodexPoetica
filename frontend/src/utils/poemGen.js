@@ -120,13 +120,14 @@ function buildSonnet(pool, title) {
   ]
   const shuffled = [...all].sort(() => Math.random() - 0.5)
   const lines = []
-  // 前8行铺陈
-  for (let i = 0; i < 8; i++) lines.push(pool[i] || shuffled[i] || OPENING_LINES[i % OPENING_LINES.length])
-  // 空行分隔
+  for (let i = 0; i < 8; i++) {
+    lines.push(pool[i] || shuffled[i % shuffled.length] || OPENING_LINES[i % OPENING_LINES.length])
+  }
   lines.push('')
-  // 后6行转折
   const turn = [...CLOSING_LINES, ...pickRandom(DEPTH_LINES, 3), ...pickRandom(BRANCH_LINES, 2)]
-  for (let i = 0; i < 5; i++) lines.push(turn[i] || shuffled[i + 8])
+  for (let i = 0; i < 5; i++) {
+    lines.push(turn[i] || shuffled[(i + 8) % shuffled.length])
+  }
   lines.push(pickRandom(CLOSING_LINES, 1)[0])
   return { title, style: 'sonnet', lines }
 }
