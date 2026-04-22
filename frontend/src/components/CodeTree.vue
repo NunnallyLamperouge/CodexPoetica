@@ -13,6 +13,7 @@ import { ParticleTree3D } from '../utils/particleTree3d.js'
 
 const props = defineProps({
   astSummary: { type: Object, default: null },
+  codeDna: { type: Object, default: null },
   theme: { type: String, default: 'forest_ink' },
   width: { type: Number, default: 400 },
   height: { type: Number, default: 300 },
@@ -47,7 +48,7 @@ function runVisualization() {
   if (props.mode === '3d') {
     if (props.astSummary && props.astSummary.nodeCount > 0) {
       particle3d = new ParticleTree3D(canvas3d.value)
-      particle3d.animate(props.astSummary, props.theme)
+      particle3d.animate(props.astSummary, props.theme, props.codeDna)
       if (props.playing) startSpectrum3d()
     }
   } else if (props.mode === 'ast') {

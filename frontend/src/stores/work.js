@@ -2,13 +2,15 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { api } from '../api/index.js'
 import { parseCode } from '../utils/parser.js'
-import { generatePoem } from '../utils/poemGen.js'
+import { generatePoem, generateFromDna } from '../utils/poemGen.js'
 import { audioGen } from '../utils/audioGen.js'
+import { extractDna } from '../utils/codeDna.js'
 
 export const useWorkStore = defineStore('work', () => {
   const language = ref('javascript')
   const sourceCode = ref('')
   const astSummary = ref(null)
+  const codeDna = ref(null)
   const poemResult = ref(null)
   const audioConfig = ref(null)
   const visualConfig = ref({ theme: 'forest_ink', seed: Date.now(), nodeCount: 0 })
@@ -21,13 +23,8 @@ export const useWorkStore = defineStore('work', () => {
   const audioError = ref(null)
 
   const MONACO_THEME_MAP = {
-    forest_ink: 'vs-dark',
-    ink_wash: 'hc-black',
-    neon_circuit: 'vs-dark',
-    sakura_dream: 'vs-dark',
-    deep_ocean: 'hc-black',
-    golden_autumn: 'vs-dark',
-    void_purple: 'hc-black',
+    forest_ink: 'vs-dark', ink_wash: 'hc-black', neon_circuit: 'vs-dark',
+    sakura_dream: 'vs-dark', deep_ocean: 'hc-black', golden_autumn: 'vs-dark', void_purple: 'hc-black',
   }
   const monacoTheme = ref('vs-dark')
 
@@ -42,6 +39,7 @@ export const useWorkStore = defineStore('work', () => {
     sourceCode.value = code
     if (!code.trim()) {
       astSummary.value = null
+      codeDna.value = null
       poemResult.value = null
       parseError.value = null
       return
@@ -50,10 +48,17 @@ export const useWorkStore = defineStore('work', () => {
     parseError.value = summary.error || null
     astSummary.value = summary
 
+    // extract DNA
+    const dna = extractDna(summary)
+    codeDna.value = dna
+
     const profile = mappingProfiles.value.find(p => p.id === mappingProfileId.value)
     const style = profile?.poemStyle || 'free_verse'
-    poemResult.value = generatePoem(summary, style)
 
+    // use DNA-driven poem if available, fallback to summary-based
+    poemResult.value = dna ? (generateFromDna(dna, style) || generatePoem(summary, style)) : generatePoem(summary, style)
+
+    // use DNA-driven audio if available
     const cfg = audioGen.buildConfig(summary)
     audioConfig.value = cfg
     visualConfig.value = { theme: profile?.visualTheme || 'forest_ink', seed: Date.now(), nodeCount: summary.nodeCount }
@@ -61,13 +66,26 @@ export const useWorkStore = defineStore('work', () => {
 
     if (isPlaying.value) {
       audioGen.stop()
-      audioGen.play(cfg, summary)
+      if (dna) audioGen.playFromDna(dna)
+      else audioGen.play(cfg, summary)
     }
   }
 
   function toggleAudio() {
     audioError.value = null
-    isPlaying.value = audioGen.toggle(audioConfig.value, astSummary.value)
+    if (audioGen.playing) {
+      audioGen.stop()
+      isPlaying.value = false
+      return
+    }
+    if (codeDna.value) {
+      audioGen.error = null
+      try { audioGen._ensureCtx() } catch (e) { audioError.value = e.message; return }
+      audioGen.playFromDna(codeDna.value)
+      isPlaying.value = true
+    } else {
+      isPlaying.value = audioGen.toggle(audioConfig.value, astSummary.value)
+    }
     if (audioGen.error) {
       audioError.value = audioGen.error
       audioSupported.value = audioGen.supported
@@ -108,7 +126,7 @@ export const useWorkStore = defineStore('work', () => {
   }
 
   return {
-    language, sourceCode, astSummary, poemResult, audioConfig, visualConfig,
+    language, sourceCode, astSummary, codeDna, poemResult, audioConfig, visualConfig,
     mappingProfileId, mappingProfiles, currentWorkId, parseError, isPlaying,
     audioSupported, audioError, monacoTheme,
     getFrequencyData: () => audioGen.getFrequencyData(),

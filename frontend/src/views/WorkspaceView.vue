@@ -46,6 +46,7 @@
             </div>
             <CodeTree
               :astSummary="store.astSummary"
+              :codeDna="store.codeDna"
               :theme="store.visualConfig?.theme"
               :width="treeWidth"
               :height="treeHeight"

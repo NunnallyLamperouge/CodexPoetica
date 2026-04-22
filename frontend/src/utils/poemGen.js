@@ -154,3 +154,50 @@ function generateTitle(ast) {
   if (functionCount === 1) return '孤独的函数'
   return '代码之诗'
 }
+
+const SHAPE_TITLES = {
+  spiral:   '递归的螺旋',
+  tower:    '深渊之塔',
+  flat:     '平原上的代码',
+  bush:     '分支的丛林',
+  balanced: '均衡的宇宙',
+}
+
+export function generateFromDna(dna, style = 'free_verse') {
+  if (!dna) return null
+  const { shape, weights, rhythmPattern } = dna
+  const title = SHAPE_TITLES[shape] || '代码之诗'
+
+  // build pool weighted by DNA
+  const pool = []
+  const w = weights || {}
+  if (w.function > 0.1) pool.push(...pickRandom(FUNCTION_LINES, Math.ceil(w.function * 5)))
+  if (w.variable > 0.1) pool.push(...pickRandom(VARIABLE_LINES, Math.ceil(w.variable * 4)))
+  if (w.branch > 0.1)   pool.push(...pickRandom(BRANCH_LINES, Math.ceil(w.branch * 4)))
+  if (w.loop > 0.1)     pool.push(...pickRandom(LOOP_LINES, Math.ceil(w.loop * 4)))
+  if (w.class > 0.1)    pool.push(...pickRandom(CLASS_LINES, Math.ceil(w.class * 3)))
+  if (pool.length === 0) pool.push(...pickRandom(OPENING_LINES, 3))
+
+  // apply rhythm: trim/pad lines based on rhythmPattern
+  const rhythmLines = pool.map((line, i) => {
+    const targetLen = rhythmPattern?.[i % (rhythmPattern?.length || 1)] || 4
+    if (targetLen <= 3) return line.slice(0, Math.ceil(line.length * 0.6))
+    if (targetLen >= 6) return line + '，' + pickRandom(DEPTH_LINES, 1)[0].slice(0, 4)
+    return line
+  })
+
+  // shape-specific opening
+  const shapeOpening = {
+    spiral:   '在递归的螺旋里，时间折叠',
+    tower:    '层层深入，直到光无法抵达',
+    flat:     '一切铺展开来，如同平原',
+    bush:     '分支蔓延，每一条路都是答案',
+    balanced: '结构均衡，如同宇宙的呼吸',
+  }
+  const lines = [shapeOpening[shape] || pickRandom(OPENING_LINES, 1)[0], ...rhythmLines]
+  lines.push(pickRandom(CLOSING_LINES, 1)[0])
+
+  if (style === 'haiku') return { title, style, lines: lines.slice(0, 3), shape }
+  if (style === 'sonnet') return buildSonnet(lines, title)
+  return { title, style, lines, shape }
+}

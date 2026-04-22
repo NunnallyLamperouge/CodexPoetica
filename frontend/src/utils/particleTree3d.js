@@ -22,28 +22,86 @@ const BG_COLORS = {
 
 function buildNodeList(astSummary) {
   const { functionCount = 0, variableCount = 0, branchCount = 0, loopCount = 0, classCount = 0 } = astSummary || {}
-  const nodes = [{ id: 0, kind: 'root', parent: null }]
+  const nodes = [{ id: 0, kind: 'root', parent: null, depth: 0 }]
   let id = 1
   const add = (kind, count, max) => {
-    for (let i = 0; i < Math.min(count, max); i++) nodes.push({ id: id++, kind, parent: 0 })
+    for (let i = 0; i < Math.min(count, max); i++) nodes.push({ id: id++, kind, parent: 0, depth: 1 })
   }
   add('function', functionCount, 5)
   add('variable', variableCount, 5)
   add('branch', branchCount, 4)
   add('loop', loopCount, 4)
   add('class', classCount, 3)
-  if (nodes.length === 1) nodes.push({ id: id++, kind: 'other', parent: 0 })
+  if (nodes.length === 1) nodes.push({ id: id++, kind: 'other', parent: 0, depth: 1 })
   return nodes
 }
 
-function spherePos(radius, index, total) {
-  const phi = Math.acos(1 - 2 * (index + 0.5) / total)
-  const theta = Math.PI * (1 + Math.sqrt(5)) * index
-  return new THREE.Vector3(
-    radius * Math.sin(phi) * Math.cos(theta),
-    radius * Math.sin(phi) * Math.sin(theta),
-    radius * Math.cos(phi)
-  )
+function computePositions(nodes, dna) {
+  const shape = dna?.shape || 'balanced'
+  const total = nodes.length
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5))
+
+  return nodes.map((node, i) => {
+    if (node.parent === null) return new THREE.Vector3(0, 0, 0)
+
+    if (shape === 'spiral') {
+      const t = i / total
+      const r = 0.5 + t * 1.5
+      const angle = i * goldenAngle
+      return new THREE.Vector3(
+        r * Math.cos(angle),
+        t * 4 - 2,
+        r * Math.sin(angle)
+      )
+    }
+
+    if (shape === 'tower') {
+      const depth = node.depth || 1
+      const siblings = nodes.filter(n => n.depth === depth && n.parent !== null)
+      const idx = siblings.indexOf(node)
+      const count = siblings.length
+      const angle = (idx / Math.max(count, 1)) * Math.PI * 2
+      const r = 0.8 + depth * 0.3
+      return new THREE.Vector3(
+        r * Math.cos(angle),
+        depth * 0.9 - 1.5,
+        r * Math.sin(angle)
+      )
+    }
+
+    if (shape === 'flat') {
+      const t = (i - 1) / Math.max(total - 1, 1)
+      return new THREE.Vector3(
+        (t - 0.5) * 5,
+        (Math.random() - 0.5) * 0.4,
+        (Math.random() - 0.5) * 1.5
+      )
+    }
+
+    if (shape === 'bush') {
+      const kindAngles = { function: 0, variable: 1.26, branch: 2.51, loop: 3.77, class: 5.03, other: 4.4 }
+      const baseAngle = kindAngles[node.kind] || 0
+      const jitter = (Math.random() - 0.5) * 0.8
+      const r = 1.2 + Math.random() * 1.2
+      const angle = baseAngle + jitter
+      const elevation = (Math.random() - 0.5) * 1.5
+      return new THREE.Vector3(
+        r * Math.cos(angle),
+        elevation,
+        r * Math.sin(angle)
+      )
+    }
+
+    // balanced: golden spiral sphere
+    const phi = Math.acos(1 - 2 * (i + 0.5) / total)
+    const theta = Math.PI * (1 + Math.sqrt(5)) * i
+    const r = 1.8
+    return new THREE.Vector3(
+      r * Math.sin(phi) * Math.cos(theta),
+      r * Math.sin(phi) * Math.sin(theta),
+      r * Math.cos(phi)
+    )
+  })
 }
 
 export class ParticleTree3D {
@@ -78,39 +136,26 @@ export class ParticleTree3D {
     this.scene.add(point)
   }
 
-  animate(astSummary, theme) {
+  animate(astSummary, theme, dna) {
     this.destroy()
     this.init(theme)
     this.nodeList = buildNodeList(astSummary)
     this.meshes = []
     this.visibleCount = 0
 
-    // build all meshes (hidden initially)
+    const positions = computePositions(this.nodeList, dna)
+
     this.nodeList.forEach((node, i) => {
       const color = NODE_COLORS[node.kind] || NODE_COLORS.other
       const size = node.kind === 'root' ? 0.22 : node.kind === 'function' ? 0.16 : 0.11
       const geo = new THREE.SphereGeometry(size, 16, 16)
       const mat = new THREE.MeshPhongMaterial({ color, emissive: color, emissiveIntensity: 0.3, shininess: 80 })
       const mesh = new THREE.Mesh(geo, mat)
-
-      const childNodes = this.nodeList.filter(n => n.parent === node.id)
-      const siblings = this.nodeList.filter(n => n.parent === node.parent && n.id !== node.id)
-      const idx = siblings.findIndex(n => n.id === node.id)
-      const total = siblings.length + 1
-
-      if (node.parent === null) {
-        mesh.position.set(0, 0, 0)
-      } else {
-        const pos = spherePos(1.8, i, this.nodeList.length)
-        mesh.position.copy(pos)
-      }
-
+      mesh.position.copy(positions[i])
       mesh.scale.setScalar(0)
       mesh.userData = { targetScale: 1, node }
       this.scene.add(mesh)
       this.meshes.push(mesh)
-
-      // float particles around node
       this._addFloatParticles(mesh.position, color, 10)
     })
 

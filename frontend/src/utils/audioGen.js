@@ -99,6 +99,37 @@ export class AudioGenerator {
     return data
   }
 
+  playFromDna(dna) {
+    if (!dna || !dna.noteSequence || dna.noteSequence.length === 0) return
+    this.stop()
+    this.error = null
+    try {
+      this._ensureCtx()
+    } catch (e) {
+      this.error = e.message
+      return
+    }
+    if (this.ctx.state === 'suspended') this.ctx.resume()
+
+    const notes = dna.noteSequence
+    const bpm = this.buildConfig(dna).bpm
+    const beatDuration = 60 / bpm
+    // use rhythm pattern to vary note duration
+    const rhythm = dna.rhythmPattern || []
+
+    this.playing = true
+    let time = 0
+    notes.forEach((midi, i) => {
+      const dur = rhythm[i % rhythm.length] ? beatDuration * (rhythm[i % rhythm.length] / 4) : beatDuration
+      const id = setTimeout(() => {
+        if (!this.playing) return
+        this._playNote(midiToFreq(midi), Math.min(dur * 0.85, 1.2))
+      }, time * 1000)
+      this.timeoutIds.push(id)
+      time += dur
+    })
+  }
+
   stop() {
     this.playing = false
     this.timeoutIds.forEach(clearTimeout)
