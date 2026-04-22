@@ -42,6 +42,7 @@
               代码树
               <button class="btn-mode" :class="{ active: treeMode === 'tree' }" @click="treeMode = 'tree'">分支</button>
               <button class="btn-mode" :class="{ active: treeMode === 'ast' }" @click="treeMode = 'ast'">AST节点</button>
+              <button class="btn-mode" :class="{ active: treeMode === '3d' }" @click="treeMode = '3d'">3D粒子</button>
             </div>
             <CodeTree
               :astSummary="store.astSummary"
