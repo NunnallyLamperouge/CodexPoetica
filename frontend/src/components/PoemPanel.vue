@@ -1,6 +1,9 @@
 <template>
   <div class="poem-panel">
-    <div v-if="!poem" class="empty">输入代码后，诗歌将在此生成</div>
+    <div v-if="!poem" class="empty">
+      <div class="empty-icon">&#x2727;</div>
+      <div class="empty-text">输入代码后，诗歌将在此生成</div>
+    </div>
     <template v-else>
       <div class="poem-title">{{ poem.title }}</div>
       <div class="poem-meta">
@@ -57,27 +60,62 @@ watch(() => props.poem, (newPoem) => {
 
 <style scoped>
 .poem-panel {
-  padding: 16px;
+  padding: 20px;
   height: 100%;
   overflow-y: auto;
   color: #d1fae5;
   font-family: 'Georgia', serif;
 }
-.empty { color: #6b7280; font-style: italic; }
-.poem-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 4px; color: #4ade80; }
-.poem-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
-.poem-style { font-size: 0.75rem; color: #6b7280; }
-.poem-shape { font-size: 0.72rem; color: #a78bfa; background: #1e1a2e; padding: 1px 7px; border-radius: 10px; }
+
+.empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100%; color: var(--text-muted); gap: 12px;
+}
+.empty-icon {
+  font-size: 2rem; color: var(--accent-green); opacity: 0.5;
+  animation: empty-pulse 2.5s ease-in-out infinite;
+}
+@keyframes empty-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+}
+.empty-text { font-size: 0.85rem; font-style: italic; }
+
+.poem-title {
+  font-size: 1.2rem; font-weight: bold; color: var(--accent-green);
+  padding-bottom: 8px; margin-bottom: 4px;
+  border-bottom: 2px solid rgba(74, 222, 128, 0.2);
+  background: linear-gradient(90deg, rgba(74,222,128,0.08) 0%, transparent 100%);
+  margin: -4px -8px 8px; padding: 6px 8px 8px;
+  border-radius: 4px 4px 0 0;
+}
+
+.poem-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
+.poem-style {
+  font-size: 0.75rem; color: var(--text-secondary);
+  padding: 2px 8px; background: rgba(255,255,255,0.04);
+  border-radius: 10px; border: 1px solid var(--border-primary);
+}
+.poem-shape {
+  font-size: 0.72rem; color: var(--accent-purple);
+  background: rgba(167, 139, 250, 0.1); padding: 2px 9px;
+  border-radius: 10px; border: 1px solid rgba(167, 139, 250, 0.2);
+}
+
 .poem-line {
-  margin: 6px 0;
-  line-height: 1.8;
-  font-size: 0.95rem;
-  opacity: 0;
-  transform: translateY(6px);
+  position: relative;
+  margin: 0; padding: 7px 0 7px 14px;
+  line-height: 1.8; font-size: 0.95rem;
+  opacity: 0; transform: translateY(6px);
   transition: opacity 0.4s ease, transform 0.4s ease;
+  border-left: 2px solid transparent;
 }
 .poem-line.visible {
-  opacity: 1;
-  transform: translateY(0);
+  opacity: 1; transform: translateY(0);
+  border-left-color: rgba(74, 222, 128, 0.2);
+}
+.poem-line.visible:hover {
+  border-left-color: var(--accent-green);
+  background: rgba(74, 222, 128, 0.03);
 }
 </style>

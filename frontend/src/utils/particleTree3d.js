@@ -10,98 +10,40 @@ const NODE_COLORS = {
   other:     0x6b7280,
 }
 
-const BG_COLORS = {
-  forest_ink:    0x0d1117,
-  ink_wash:      0x1a1a2e,
-  neon_circuit:  0x0f0f23,
-  sakura_dream:  0x1a0a0f,
-  deep_ocean:    0x020c1b,
-  golden_autumn: 0x1a0f00,
-  void_purple:   0x000000,
+const LEAF_COLORS = [0x4ade80, 0x60a5fa, 0xf59e0b, 0xa78bfa, 0xf472b6]
+
+const BG = 0x0d1117
+
+const TRUNK_COLOR = 0x8B5A2B
+const TRUNK_EMISSIVE = 0x3d2817
+
+const SHAPE_CONFIG = {
+  spiral:   { maxDepth: 5, trunkLen: 1.8, lenFactor: 0.68, radFactor: 0.55, forks: 2, baseAngle: 0.35, jitter: 0.25, spiralTwist: 0.6 },
+  tower:    { maxDepth: 6, trunkLen: 1.6, lenFactor: 0.62, radFactor: 0.52, forks: 3, baseAngle: 0.55, jitter: 0.15, spiralTwist: 0 },
+  flat:     { maxDepth: 3, trunkLen: 0.7, lenFactor: 0.75, radFactor: 0.58, forks: 3, baseAngle: 0.85, jitter: 0.3, spiralTwist: 0 },
+  bush:     { maxDepth: 4, trunkLen: 0.9, lenFactor: 0.65, radFactor: 0.5, forks: 3, baseAngle: 0.7, jitter: 0.4, spiralTwist: 0 },
+  balanced: { maxDepth: 4, trunkLen: 1.4, lenFactor: 0.7, radFactor: 0.55, forks: 2, baseAngle: 0.45, jitter: 0.2, spiralTwist: 0 },
 }
 
-function buildNodeList(astSummary) {
-  const { functionCount = 0, variableCount = 0, branchCount = 0, loopCount = 0, classCount = 0 } = astSummary || {}
-  const nodes = [{ id: 0, kind: 'root', parent: null, depth: 0 }]
-  let id = 1
-  const add = (kind, count, max) => {
-    for (let i = 0; i < Math.min(count, max); i++) nodes.push({ id: id++, kind, parent: 0, depth: 1 })
+function seededRandom(seed) {
+  let s = seed
+  return () => {
+    s = (s * 16807 + 0) % 2147483647
+    return (s - 1) / 2147483646
   }
-  add('function', functionCount, 5)
-  add('variable', variableCount, 5)
-  add('branch', branchCount, 4)
-  add('loop', loopCount, 4)
-  add('class', classCount, 3)
-  if (nodes.length === 1) nodes.push({ id: id++, kind: 'other', parent: 0, depth: 1 })
-  return nodes
 }
 
-function computePositions(nodes, dna) {
-  const shape = dna?.shape || 'balanced'
-  const total = nodes.length
-  const goldenAngle = Math.PI * (3 - Math.sqrt(5))
-
-  return nodes.map((node, i) => {
-    if (node.parent === null) return new THREE.Vector3(0, 0, 0)
-
-    if (shape === 'spiral') {
-      const t = i / total
-      const r = 0.5 + t * 1.5
-      const angle = i * goldenAngle
-      return new THREE.Vector3(
-        r * Math.cos(angle),
-        t * 4 - 2,
-        r * Math.sin(angle)
-      )
-    }
-
-    if (shape === 'tower') {
-      const depth = node.depth || 1
-      const siblings = nodes.filter(n => n.depth === depth && n.parent !== null)
-      const idx = Math.max(0, siblings.indexOf(node))
-      const count = Math.max(siblings.length, 1)
-      const angle = (idx / count) * Math.PI * 2
-      const r = 0.8 + depth * 0.3
-      return new THREE.Vector3(
-        r * Math.cos(angle),
-        depth * 0.9 - 1.5,
-        r * Math.sin(angle)
-      )
-    }
-
-    if (shape === 'flat') {
-      const t = (i - 1) / Math.max(total - 1, 1)
-      return new THREE.Vector3(
-        (t - 0.5) * 5,
-        (Math.random() - 0.5) * 0.4,
-        (Math.random() - 0.5) * 1.5
-      )
-    }
-
-    if (shape === 'bush') {
-      const kindAngles = { function: 0, variable: 1.26, branch: 2.51, loop: 3.77, class: 5.03, other: 4.4 }
-      const baseAngle = kindAngles[node.kind] || 0
-      const jitter = (Math.random() - 0.5) * 0.8
-      const r = 1.2 + Math.random() * 1.2
-      const angle = baseAngle + jitter
-      const elevation = (Math.random() - 0.5) * 1.5
-      return new THREE.Vector3(
-        r * Math.cos(angle),
-        elevation,
-        r * Math.sin(angle)
-      )
-    }
-
-    // balanced: golden spiral sphere
-    const phi = Math.acos(1 - 2 * (i + 0.5) / total)
-    const theta = Math.PI * (1 + Math.sqrt(5)) * i
-    const r = 1.8
-    return new THREE.Vector3(
-      r * Math.sin(phi) * Math.cos(theta),
-      r * Math.sin(phi) * Math.sin(theta),
-      r * Math.cos(phi)
-    )
-  })
+function buildLeafColors(astSummary) {
+  const { functionCount = 0, variableCount = 0, branchCount = 0, loopCount = 0, classCount = 0 } = astSummary || {}
+  const pool = []
+  const add = (color, count) => { for (let i = 0; i < Math.max(count, 1); i++) pool.push(color) }
+  add(NODE_COLORS.function, functionCount)
+  add(NODE_COLORS.variable, variableCount)
+  add(NODE_COLORS.branch, branchCount)
+  add(NODE_COLORS.loop, loopCount)
+  add(NODE_COLORS.class, classCount)
+  if (pool.length === 0) pool.push(NODE_COLORS.other)
+  return pool
 }
 
 export class ParticleTree3D {
@@ -110,122 +52,192 @@ export class ParticleTree3D {
     this.renderer = null
     this.scene = null
     this.camera = null
-    this.meshes = []
-    this.floatParticles = []
     this.animFrame = null
-    this.visibleCount = 0
     this.timers = []
-    this.nodeList = []
     this.rotY = 0
+    this.time = 0
+    this.branchGroups = []
+    this.leafSystems = []
+    this.treeGroup = null
+    this.growProgress = 0
+    this.growTarget = 0
   }
 
   init(theme) {
-    const bg = BG_COLORS[theme] || BG_COLORS.forest_ink
+    const bg = BG
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: false })
     this.renderer.setSize(this.canvas.width, this.canvas.height)
     this.renderer.setClearColor(bg)
 
     this.scene = new THREE.Scene()
-    this.camera = new THREE.PerspectiveCamera(60, this.canvas.width / this.canvas.height, 0.1, 100)
-    this.camera.position.set(0, 0, 6)
+    this.camera = new THREE.PerspectiveCamera(50, this.canvas.width / this.canvas.height, 0.1, 100)
+    this.camera.position.set(0, 1.5, 7)
+    this.camera.lookAt(0, 1.5, 0)
 
-    const ambient = new THREE.AmbientLight(0xffffff, 0.4)
-    this.scene.add(ambient)
-    const point = new THREE.PointLight(0xffffff, 1.2, 20)
-    point.position.set(3, 3, 3)
+    this.scene.add(new THREE.AmbientLight(0xffffff, 0.5))
+    const point = new THREE.PointLight(0xffffff, 1.0, 30)
+    point.position.set(4, 6, 4)
     this.scene.add(point)
+    const fill = new THREE.PointLight(0x8888ff, 0.3, 20)
+    fill.position.set(-3, 2, -2)
+    this.scene.add(fill)
   }
 
   animate(astSummary, theme, dna) {
     this.destroy()
     this.init(theme)
-    this.nodeList = buildNodeList(astSummary)
-    this.meshes = []
-    this.visibleCount = 0
 
-    const positions = computePositions(this.nodeList, dna)
+    const shape = dna?.shape || 'balanced'
+    const cfg = SHAPE_CONFIG[shape] || SHAPE_CONFIG.balanced
+    const nodeCount = astSummary?.nodeCount || 5
+    const seed = (nodeCount * 7 + (astSummary?.maxDepth || 3) * 13 + cfg.maxDepth * 31) | 0
+    const rand = seededRandom(seed)
+    const leafColors = buildLeafColors(astSummary)
 
-    this.nodeList.forEach((node, i) => {
-      const color = NODE_COLORS[node.kind] || NODE_COLORS.other
-      const size = node.kind === 'root' ? 0.22 : node.kind === 'function' ? 0.16 : 0.11
-      const geo = new THREE.SphereGeometry(size, 16, 16)
-      const mat = new THREE.MeshPhongMaterial({ color, emissive: color, emissiveIntensity: 0.3, shininess: 80 })
-      const mesh = new THREE.Mesh(geo, mat)
-      mesh.position.copy(positions[i])
-      mesh.scale.setScalar(0)
-      mesh.userData = { targetScale: 1, node }
-      this.scene.add(mesh)
-      this.meshes.push(mesh)
-      this._addFloatParticles(mesh.position, color, 10)
-    })
+    this.treeGroup = new THREE.Group()
+    this.scene.add(this.treeGroup)
+    this.branchGroups = []
+    this.leafSystems = []
 
-    // draw edges
-    this._buildEdges()
+    this._generateBranch(
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, 1, 0),
+      cfg.trunkLen,
+      0.12,
+      0, cfg, rand, leafColors, nodeCount
+    )
 
-    // reveal nodes one by one
-    this.nodeList.forEach((_, i) => {
-      const t = setTimeout(() => { this.visibleCount = i + 1 }, i * 100)
+    this.growProgress = 0
+    this.growTarget = this.branchGroups.length
+    this.branchGroups.forEach((bg, i) => {
+      bg.group.scale.setScalar(0)
+      const t = setTimeout(() => { this.growProgress = i + 1 }, i * 80)
       this.timers.push(t)
     })
 
     this._loop()
   }
 
-  _addFloatParticles(center, color, count) {
-    const positions = new Float32Array(count * 3)
-    const velocities = []
-    for (let i = 0; i < count; i++) {
-      positions[i * 3]     = center.x + (Math.random() - 0.5) * 0.6
-      positions[i * 3 + 1] = center.y + (Math.random() - 0.5) * 0.6
-      positions[i * 3 + 2] = center.z + (Math.random() - 0.5) * 0.6
-      velocities.push({ x: (Math.random() - 0.5) * 0.002, y: (Math.random() - 0.5) * 0.002, z: (Math.random() - 0.5) * 0.002 })
+  _generateBranch(origin, direction, length, radius, depth, cfg, rand, leafColors, nodeCount) {
+    if (depth > cfg.maxDepth || radius < 0.008) return
+
+    const segments = 5
+    const geo = new THREE.CylinderGeometry(radius * cfg.radFactor, radius, length, 6, segments)
+    geo.translate(0, length / 2, 0)
+
+    const darkness = Math.min(depth * 0.08, 0.3)
+    const mat = new THREE.MeshPhongMaterial({
+      color: TRUNK_COLOR,
+      emissive: TRUNK_EMISSIVE,
+      emissiveIntensity: 0.15 - darkness * 0.1,
+      shininess: 10,
+    })
+
+    const mesh = new THREE.Mesh(geo, mat)
+    mesh.position.copy(origin)
+
+    const up = new THREE.Vector3(0, 1, 0)
+    const quat = new THREE.Quaternion().setFromUnitVectors(up, direction.clone().normalize())
+    mesh.quaternion.copy(quat)
+
+    const group = new THREE.Group()
+    group.add(mesh)
+    this.treeGroup.add(group)
+    this.branchGroups.push({ group, depth })
+
+    const tipLocal = new THREE.Vector3(0, length, 0)
+    tipLocal.applyQuaternion(quat)
+    const tip = origin.clone().add(tipLocal)
+
+    const isLeafLevel = depth >= cfg.maxDepth - 1
+    if (isLeafLevel) {
+      this._addLeaves(tip, leafColors, Math.max(6, Math.min(nodeCount * 2, 40)), rand, group)
     }
+
+    const forks = cfg.forks + (rand() > 0.6 ? 1 : 0)
+    for (let i = 0; i < forks; i++) {
+      const angleY = (i / forks) * Math.PI * 2 + rand() * cfg.jitter * 2
+      const angleOut = cfg.baseAngle + (rand() - 0.5) * cfg.jitter
+      const twist = cfg.spiralTwist * depth
+
+      const newDir = new THREE.Vector3(
+        Math.sin(angleOut) * Math.cos(angleY + twist),
+        Math.cos(angleOut),
+        Math.sin(angleOut) * Math.sin(angleY + twist)
+      ).normalize()
+
+      const blended = new THREE.Vector3()
+        .addScaledVector(direction.clone().normalize(), 0.4)
+        .addScaledVector(newDir, 0.6)
+        .normalize()
+
+      this._generateBranch(
+        tip, blended,
+        length * cfg.lenFactor * (0.85 + rand() * 0.3),
+        radius * cfg.radFactor,
+        depth + 1, cfg, rand, leafColors, nodeCount
+      )
+    }
+  }
+
+  _addLeaves(center, colorPool, count, rand, parentGroup) {
+    const positions = new Float32Array(count * 3)
+    const colors = new Float32Array(count * 3)
+    const basePositions = new Float32Array(count * 3)
+
+    for (let i = 0; i < count; i++) {
+      const theta = rand() * Math.PI * 2
+      const phi = rand() * Math.PI
+      const r = 0.15 + rand() * 0.35
+      const x = center.x + r * Math.sin(phi) * Math.cos(theta)
+      const y = center.y + r * Math.sin(phi) * Math.sin(theta) * 0.6 + rand() * 0.1
+      const z = center.z + r * Math.cos(phi)
+      positions[i * 3] = x
+      positions[i * 3 + 1] = y
+      positions[i * 3 + 2] = z
+      basePositions[i * 3] = x
+      basePositions[i * 3 + 1] = y
+      basePositions[i * 3 + 2] = z
+
+      const c = new THREE.Color(colorPool[Math.floor(rand() * colorPool.length)])
+      colors[i * 3] = c.r
+      colors[i * 3 + 1] = c.g
+      colors[i * 3 + 2] = c.b
+    }
+
     const geo = new THREE.BufferGeometry()
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    const mat = new THREE.PointsMaterial({ color, size: 0.025, transparent: true, opacity: 0.7 })
-    const points = new THREE.Points(geo, mat)
-    this.scene.add(points)
-    this.floatParticles.push({ points, velocities, center: center.clone(), count })
-  }
-
-  _buildEdges() {
-    this.nodeList.forEach((node, i) => {
-      if (node.parent === null) return
-      const parentMesh = this.meshes[node.parent]
-      const childMesh = this.meshes[i]
-      if (!parentMesh || !childMesh) return
-      const color = NODE_COLORS[node.kind] || NODE_COLORS.other
-      const geo = new THREE.BufferGeometry().setFromPoints([parentMesh.position, childMesh.position])
-      const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.35 })
-      this.scene.add(new THREE.Line(geo, mat))
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+    const mat = new THREE.PointsMaterial({
+      size: 0.08,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.85,
+      sizeAttenuation: true,
     })
+    const points = new THREE.Points(geo, mat)
+    parentGroup.add(points)
+    this.leafSystems.push({ points, basePositions, count, center: center.clone() })
   }
-
   _loop() {
-    this.rotY += 0.003
-    if (this.scene) this.scene.rotation.y = this.rotY
+    this.time += 0.016
+    this.rotY += 0.002
+    if (this.treeGroup) this.treeGroup.rotation.y = this.rotY
 
-    // scale in visible nodes
-    this.meshes.forEach((mesh, i) => {
-      if (i < this.visibleCount) {
-        const s = mesh.scale.x
-        if (s < 1) mesh.scale.setScalar(Math.min(1, s + 0.08))
+    this.branchGroups.forEach((bg, i) => {
+      if (i < this.growProgress) {
+        const s = bg.group.scale.x
+        if (s < 1) bg.group.scale.setScalar(Math.min(1, s + 0.06))
       }
     })
 
-    // animate float particles
-    this.floatParticles.forEach(({ points, velocities, center, count }) => {
+    this.leafSystems.forEach(({ points, basePositions, count }) => {
       const pos = points.geometry.attributes.position.array
       for (let i = 0; i < count; i++) {
-        pos[i * 3]     += velocities[i].x
-        pos[i * 3 + 1] += velocities[i].y
-        pos[i * 3 + 2] += velocities[i].z
-        const dx = pos[i * 3] - center.x
-        const dy = pos[i * 3 + 1] - center.y
-        const dz = pos[i * 3 + 2] - center.z
-        if (Math.abs(dx) > 0.4) velocities[i].x *= -1
-        if (Math.abs(dy) > 0.4) velocities[i].y *= -1
-        if (Math.abs(dz) > 0.4) velocities[i].z *= -1
+        const phase = this.time * 1.5 + basePositions[i * 3] * 3 + basePositions[i * 3 + 2] * 2
+        pos[i * 3] = basePositions[i * 3] + Math.sin(phase) * 0.015
+        pos[i * 3 + 1] = basePositions[i * 3 + 1] + Math.sin(phase * 0.7 + 1) * 0.01
+        pos[i * 3 + 2] = basePositions[i * 3 + 2] + Math.cos(phase * 0.8) * 0.012
       }
       points.geometry.attributes.position.needsUpdate = true
     })
@@ -237,14 +249,13 @@ export class ParticleTree3D {
   }
 
   pulse(frequencyData) {
-    if (!frequencyData || !this.meshes.length) return
+    if (!frequencyData || !this.treeGroup) return
     const avg = frequencyData.reduce((a, b) => a + b, 0) / frequencyData.length
-    const scale = 1 + (avg / 255) * 0.25
-    this.meshes.forEach((mesh, i) => {
-      if (i < this.visibleCount) {
-        const base = mesh.userData.targetScale || 1
-        mesh.scale.setScalar(base * scale)
-      }
+    const intensity = avg / 255
+    const sway = Math.sin(this.time * 3) * intensity * 0.08
+    this.treeGroup.rotation.z = sway
+    this.leafSystems.forEach(({ points }) => {
+      points.material.size = 0.08 + intensity * 0.06
     })
   }
 
@@ -257,9 +268,19 @@ export class ParticleTree3D {
       this.renderer.dispose()
       this.renderer = null
     }
+    if (this.scene) {
+      this.scene.traverse(obj => {
+        if (obj.geometry) obj.geometry.dispose()
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose())
+          else obj.material.dispose()
+        }
+      })
+    }
     this.scene = null
     this.camera = null
-    this.meshes = []
-    this.floatParticles = []
+    this.branchGroups = []
+    this.leafSystems = []
+    this.treeGroup = null
   }
 }
