@@ -111,6 +111,7 @@ export const useWorkStore = defineStore('work', () => {
     language, sourceCode, astSummary, poemResult, audioConfig, visualConfig,
     mappingProfileId, mappingProfiles, currentWorkId, parseError, isPlaying,
     audioSupported, audioError, monacoTheme,
+    getFrequencyData: () => audioGen.getFrequencyData(),
     loadMappingProfiles, processCode, toggleAudio, stopAudio, saveDraft, publishShare,
   }
 })

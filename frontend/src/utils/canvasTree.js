@@ -82,6 +82,30 @@ export class CanvasTree {
     this.animFrame = null
   }
 
+  drawSpectrum(frequencyData) {
+    if (!frequencyData) return
+    const colors = THEMES[this.theme] || THEMES.forest_ink
+    const { width, height } = this.canvas
+    const barCount = frequencyData.length
+    const barWidth = width / barCount
+    const spectrumHeight = 60
+    const baseY = height - spectrumHeight
+
+    this.ctx.save()
+    this.ctx.globalAlpha = 0.7
+    for (let i = 0; i < barCount; i++) {
+      const val = frequencyData[i] / 255
+      const barH = val * spectrumHeight
+      const x = i * barWidth
+      const gradient = this.ctx.createLinearGradient(0, baseY + spectrumHeight - barH, 0, baseY + spectrumHeight)
+      gradient.addColorStop(0, colors.branch)
+      gradient.addColorStop(1, colors.branch + '33')
+      this.ctx.fillStyle = gradient
+      this.ctx.fillRect(x, baseY + spectrumHeight - barH, barWidth - 1, barH)
+    }
+    this.ctx.restore()
+  }
+
   clear() {
     this.stop()
     const colors = THEMES[this.theme] || THEMES.forest_ink

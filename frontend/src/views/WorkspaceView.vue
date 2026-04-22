@@ -37,12 +37,19 @@
             <PoemPanel :poem="store.poemResult" />
           </div>
           <div class="panel-section tree-section">
-            <div class="panel-label">代码树</div>
+            <div class="panel-label">
+              代码树
+              <button class="btn-mode" :class="{ active: treeMode === 'tree' }" @click="treeMode = 'tree'">分支</button>
+              <button class="btn-mode" :class="{ active: treeMode === 'ast' }" @click="treeMode = 'ast'">AST节点</button>
+            </div>
             <CodeTree
               :astSummary="store.astSummary"
               :theme="store.visualConfig?.theme"
               :width="treeWidth"
               :height="treeHeight"
+              :mode="treeMode"
+              :playing="store.isPlaying"
+              :getFrequencyData="store.getFrequencyData"
             />
           </div>
         </div>
@@ -83,6 +90,7 @@ const showShare = ref(false)
 const code = ref('')
 const treeWidth = ref(400)
 const treeHeight = ref(280)
+const treeMode = ref('tree')
 
 let debounceTimer = null
 
@@ -182,6 +190,9 @@ function exportJSON() {
 .lang-select, .profile-select { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; }
 .btn-ghost { background: transparent; color: #8b949e; border: 1px solid #30363d; border-radius: 6px; padding: 5px 12px; cursor: pointer; font-size: 0.85rem; }
 .btn-ghost:hover { color: #e6edf3; border-color: #8b949e; }
+.btn-mode { background: transparent; color: #6b7280; border: 1px solid #30363d; border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 0.75rem; }
+.btn-mode.active { background: #238636; color: #fff; border-color: #238636; }
+.btn-mode:hover:not(.active) { color: #e6edf3; }
 .main { display: flex; flex: 1; overflow: hidden; }
 .left-panel { display: flex; flex-direction: column; width: 50%; border-right: 1px solid #30363d; }
 .right-panel { display: flex; flex-direction: column; flex: 1; }

@@ -19,6 +19,7 @@ function pickScale(maxDepth) {
 export class AudioGenerator {
   constructor() {
     this.ctx = null
+    this.analyser = null
     this.nodes = []
     this.playing = false
     this.timeoutIds = []
@@ -31,6 +32,9 @@ export class AudioGenerator {
     if (!this.ctx) {
       try {
         this.ctx = new (window.AudioContext || window.webkitAudioContext)()
+        this.analyser = this.ctx.createAnalyser()
+        this.analyser.fftSize = 64
+        this.analyser.connect(this.ctx.destination)
       } catch (e) {
         this.supported = false
         throw new Error('音频初始化失败：' + e.message)
@@ -82,10 +86,17 @@ export class AudioGenerator {
       gain.gain.setValueAtTime(0.15, this.ctx.currentTime)
       gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration)
       osc.connect(gain)
-      gain.connect(this.ctx.destination)
+      gain.connect(this.analyser || this.ctx.destination)
       osc.start()
       osc.stop(this.ctx.currentTime + duration)
     } catch {}
+  }
+
+  getFrequencyData() {
+    if (!this.analyser) return null
+    const data = new Uint8Array(this.analyser.frequencyBinCount)
+    this.analyser.getByteFrequencyData(data)
+    return data
   }
 
   stop() {
